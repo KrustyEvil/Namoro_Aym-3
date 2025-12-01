@@ -4,11 +4,11 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  // ajuste conforme o nome exato do repo: https://<usuario>.github.io/ProjetoAym-3/
-  base: '/ProjetoAym-3/',
+  // ajuste para o nome exato do repo (case-sensitive)
+  base: '/Namoro_Aym-3/',
   build: {
     outDir: 'docs',
-    emptyOutDir: true,      // limpa docs antes do build
+    emptyOutDir: true,
     assetsDir: 'assets',
     sourcemap: false,
     rollupOptions: {
