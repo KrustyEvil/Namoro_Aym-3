@@ -1,47 +1,79 @@
-const fotos = [
-  { 
-    src: `${import.meta.env.BASE_URL || './'}fotos/foto1.jpg`, 
-    alt: "Encontro marcante",
-    fallbackSrc: 'https://via.placeholder.com/300x200?text=Carregando...' 
-  },
-  { 
-    src: `${import.meta.env.BASE_URL || './'}fotos/foto2.jpg`, 
-    alt: "Momento especial",
-    fallbackSrc: 'https://via.placeholder.com/300x200?text=Carregando...'
-  },
-  { 
-    src: `${import.meta.env.BASE_URL || './'}fotos/foto3.jpg`, 
-    alt: "Batalhando juntos",
-    fallbackSrc: 'https://via.placeholder.com/300x200?text=Carregando...'
-  },
-];
+// c:\projectgit\src\components\Galeria.jsx
+import React, { useEffect, useState } from 'react';
+import './Galeria.css';
 
-function Galeria() {
+export default function Galeria({ images = [], delay = 3500, onCuriosity = () => {} }) {
+  const fotos = images.length
+    ? images.map((it) => (typeof it === 'string' ? { src: it, alt: '' } : it))
+    : [
+        { src: `${import.meta.env.BASE_URL || './'}fotos/foto1.jpg`, alt: 'Foto 1', fallbackSrc: '' },
+        { src: `${import.meta.env.BASE_URL || './'}fotos/foto2.jpg`, alt: 'Foto 2', fallbackSrc: '' },
+        { src: `${import.meta.env.BASE_URL || './'}fotos/foto3.jpg`, alt: 'Foto 3', fallbackSrc: '' },
+      ];
+
+  const [index, setIndex] = useState(0);
+  const [loaded, setLoaded] = useState(() => fotos.map(() => false));
+
+  useEffect(() => {
+    if (fotos.length <= 1) return;
+    const timer = setInterval(() => {
+      setIndex((i) => (i + 1) % fotos.length);
+    }, delay);
+    return () => clearInterval(timer);
+  }, [fotos.length, delay]);
+
+  const handleLoad = (i) => {
+    setLoaded((prev) => {
+      const copy = [...prev];
+      copy[i] = true;
+      return copy;
+    });
+  };
+
+  const handleError = (e, i, fallback) => {
+    if (fallback) e.currentTarget.src = fallback;
+    handleLoad(i);
+  };
+
   return (
-    <div className="mt-12">
-      <h3 className="text-2xl font-semibold mb-6 text-rose-600">Nossos Melhores Momentos</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {fotos.map((foto, index) => (
-          <div key={index} className="relative group overflow-hidden rounded-xl shadow-lg">
-            <img 
-              src={foto.src} 
-              alt={foto.alt}
-              className="w-full h-64 object-cover transform group-hover:scale-110 transition-transform duration-500"
-              loading="lazy"
-              onError={(e) => {
-                console.error(`Erro ao carregar: ${foto.src}`);
-                e.target.src = foto.fallbackSrc; // Exibe placeholder se der erro
-                e.target.onerror = null; // Previne loop
-              }}
-            />
-            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <p className="text-white text-lg font-medium">{foto.alt}</p>
+    <section className="galeria-container-large" aria-roledescription="slideshow">
+      <div className="slideshow-wrapper">
+        {fotos.map((foto, i) => (
+          <figure
+            key={i}
+            className={`slide ${i === index ? 'active' : ''} ${loaded[i] ? 'is-loaded' : 'is-loading'}`}
+            aria-hidden={i !== index}
+          >
+            <div className="slide-placeholder" aria-hidden={loaded[i]}>
+              <div className="slide-spinner" />
             </div>
-          </div>
+
+            <img
+              src={foto.src}
+              alt={foto.alt || `Imagem ${i + 1}`}
+              className="slide-img"
+              loading="lazy"
+              onLoad={() => handleLoad(i)}
+              onError={(e) => handleError(e, i, foto.fallbackSrc)}
+              draggable="false"
+            />
+
+            {foto.alt && <figcaption className="slide-caption">{foto.alt}</figcaption>}
+
+            {/* Botão "Matar curiosidade" — apenas no slide ativo */}
+            {i === index && (
+              <button
+                className="curiosity-button"
+                onClick={() => onCuriosity(foto)}
+                aria-label="Matar curiosidade"
+                type="button"
+              >
+                Matar curiosidade
+              </button>
+            )}
+          </figure>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
-
-export default Galeria;
